@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/url"
+	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -223,6 +224,25 @@ func TestProxyClient_Do(t *testing.T) {
 			},
 		},
 		{
+			name: "should return request when host is provided as Env Variable",
+			request: &http.Request{
+				Method: "GET",
+				URL:    &url.URL{},
+				Body:   nil,
+			},
+			proxyClient: &ProxyClient{
+				Signer: v4.NewSigner(credentials.NewCredentials(&mockProvider{})),
+				Client: &mockHTTPClient{},
+			},
+			want: &want{
+				resp: &http.Response{},
+				err:  nil,
+				request: &http.Request{
+					Host: "execute-api.us-west-2.amazonaws.com",
+				},
+			},
+		},
+		{
 			name: "should return request when everything 👍",
 			request: &http.Request{
 				Method: "GET",
@@ -246,9 +266,12 @@ func TestProxyClient_Do(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.name ==  "should return request when host is provided as Env Variable" {
+				service := "execute-api.us-west-2.amazonaws.com"
+				os.Setenv("API_GATEWAY_SERVICE_HOST", service)
+			}
 			resp, err :=
 			tt.proxyClient.Do(tt.request)
-
 			assert.Equal(t, tt.want.resp, resp)
 			assert.Equal(t, tt.want.err, err)
 			assert.True(t, verifyRequest(tt.proxyClient.Client.(*mockHTTPClient).Request, tt.want.request))

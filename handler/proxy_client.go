@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/endpoints"
@@ -35,12 +36,12 @@ type Client interface {
 
 // ProxyClient implements the Client interface
 type ProxyClient struct {
-	Signer *v4.Signer
-	Client Client
+	Signer              *v4.Signer
+	Client              Client
 	StripRequestHeaders []string
 	SigningNameOverride string
-	HostOverride string
-	RegionOverride string
+	HostOverride        string
+	RegionOverride      string
 }
 
 func (p *ProxyClient) sign(req *http.Request, service *endpoints.ResolvedEndpoint) error {
@@ -86,6 +87,9 @@ func copyHeaderWithoutOverwrite(dst, src http.Header) {
 }
 
 func (p *ProxyClient) Do(req *http.Request) (*http.Response, error) {
+	if envHost := os.Getenv("API_GATEWAY_SERVICE_HOST"); envHost != "" {
+		req.Host = envHost
+	}
 	proxyURL := *req.URL
 	if p.HostOverride != "" {
 		proxyURL.Host = p.HostOverride

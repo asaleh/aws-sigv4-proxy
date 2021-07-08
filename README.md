@@ -82,6 +82,15 @@ docker run --rm -ti \
   aws-sigv4-proxy -v --name execute-api --region us-east-1
 ```
 
+Include host name as an environment variable for API gateway, for example.
+```sh
+docker run --rm -ti \
+  -v ~/.aws:/root/.aws \
+  -p 8080:8080 \
+  -e 'AWS_PROFILE=<SOME PROFILE>' \
+  -e 'SERVICE_HOST=<REST_API_ID>.execute-api.<AWS_REGION>.amazonaws.com'  \
+  aws-sigv4-proxy -v --name execute-api --region us-east-1
+```
 ## Reference
 
 - [AWS SigV4 Signing Docs ](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html)
